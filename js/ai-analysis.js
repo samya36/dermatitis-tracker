@@ -1,5 +1,8 @@
 // AI智能分析功能（使用Gemini API）
 
+// 每日使用限额配置
+const DAILY_AI_LIMIT = 5; // 每天最多使用5次
+
 // 调用Gemini API进行分析
 async function analyzeWithGemini() {
     if (!currentUser) {
@@ -15,6 +18,13 @@ async function analyzeWithGemini() {
 
     const aiResultDiv = document.getElementById('ai-analysis-result');
     const aiButton = document.getElementById('ai-analysis-btn');
+
+    // 检查今日使用次数
+    const usageCheck = await checkDailyUsage();
+    if (!usageCheck.canUse) {
+        alert(`⚠️ 今日AI分析次数已用完\n\n每天限制：${DAILY_AI_LIMIT}次\n已使用：${usageCheck.usedCount}次\n明天再来吧！`);
+        return;
+    }
 
     // 显示加载状态
     aiButton.disabled = true;
@@ -46,8 +56,14 @@ async function analyzeWithGemini() {
         // 调用Gemini API
         const analysis = await callGeminiAPI(dataSummary);
 
+        // 记录使用次数
+        await recordUsage();
+
         // 显示分析结果
         displayAIAnalysis(analysis);
+
+        // 更新剩余次数显示
+        updateUsageDisplay();
 
     } catch (error) {
         console.error('AI分析失败:', error);
@@ -214,3 +230,108 @@ async function saveAIAnalysis(analysisText) {
         console.log('保存AI分析结果失败:', error);
     }
 }
+
+// 检查今日使用次数
+async function checkDailyUsage() {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+        const { data, error } = await supabase
+            .from('api_usage')
+            .select('usage_count')
+            .eq('user_id', currentUser.id)
+            .eq('usage_date', today)
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+            console.error('检查使用次数失败:', error);
+            // 出错时允许使用，避免影响用户体验
+            return { canUse: true, usedCount: 0 };
+        }
+
+        const usedCount = data ? data.usage_count : 0;
+        return {
+            canUse: usedCount < DAILY_AI_LIMIT,
+            usedCount: usedCount,
+            remaining: DAILY_AI_LIMIT - usedCount
+        };
+    } catch (error) {
+        console.error('检查使用次数异常:', error);
+        return { canUse: true, usedCount: 0 };
+    }
+}
+
+// 记录使用次数
+async function recordUsage() {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+        // 先查询今天的记录
+        const { data: existing } = await supabase
+            .from('api_usage')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .eq('usage_date', today)
+            .single();
+
+        if (existing) {
+            // 更新现有记录
+            await supabase
+                .from('api_usage')
+                .update({
+                    usage_count: existing.usage_count + 1,
+                    last_used_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', existing.id);
+        } else {
+            // 创建新记录
+            await supabase
+                .from('api_usage')
+                .insert([{
+                    user_id: currentUser.id,
+                    usage_date: today,
+                    usage_count: 1,
+                    last_used_at: new Date().toISOString()
+                }]);
+        }
+    } catch (error) {
+        console.error('记录使用次数失败:', error);
+    }
+}
+
+// 更新使用次数显示
+async function updateUsageDisplay() {
+    const usageCheck = await checkDailyUsage();
+    const usageInfo = document.getElementById('ai-usage-info');
+
+    if (usageInfo) {
+        const remaining = usageCheck.remaining || 0;
+        const used = usageCheck.usedCount || 0;
+
+        let colorClass = '';
+        if (remaining <= 0) {
+            colorClass = 'color: #f44;';
+        } else if (remaining <= 2) {
+            colorClass = 'color: #ff9800;';
+        } else {
+            colorClass = 'color: #4caf50;';
+        }
+
+        usageInfo.innerHTML = `
+            <span style="${colorClass}">
+                今日已使用 ${used}/${DAILY_AI_LIMIT} 次，剩余 ${remaining} 次
+            </span>
+        `;
+    }
+}
+
+// 页面加载时显示使用次数
+document.addEventListener('DOMContentLoaded', function() {
+    // 延迟执行，确保currentUser已加载
+    setTimeout(() => {
+        if (currentUser && document.getElementById('ai-usage-info')) {
+            updateUsageDisplay();
+        }
+    }, 1000);
+});
