@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神经性皮炎管理工具</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="background: #f5f5f5;">
+    <div class="app-container">
+        <!-- 头部 -->
+        <div class="app-header">
+            <h1>神经性皮炎管理</h1>
+            <div>
+                <span id="user-email" style="margin-right: 15px; color: #666;"></span>
+                <button class="btn-logout" onclick="logout()">退出</button>
+            </div>
+        </div>
+
+        <!-- 标签页 -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('record')">今日记录</button>
+            <button class="tab" onclick="switchTab('history')">历史记录</button>
+            <button class="tab" onclick="switchTab('stats')">统计分析</button>
+        </div>
+
+        <!-- 今日记录 -->
+        <div id="record-tab" class="tab-content active">
+            <h2>快速记录</h2>
+            <form id="recordForm">
+                <!-- 饮食记录 -->
+                <div class="record-section">
+                    <h3>🍽️ 饮食</h3>
+                    <div class="form-group">
+                        <label for="meal-type">餐次</label>
+                        <select id="meal-type">
+                            <option value="">选择餐次</option>
+                            <option value="breakfast">早餐</option>
+                            <option value="lunch">午餐</option>
+                            <option value="dinner">晚餐</option>
+                            <option value="snack">零食/加餐</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>常用食物（点击选择）</label>
+                        <div class="quick-buttons" id="food-quick-buttons">
+                            <button type="button" class="quick-btn" data-food="米饭">米饭</button>
+                            <button type="button" class="quick-btn" data-food="面条">面条</button>
+                            <button type="button" class="quick-btn" data-food="鸡蛋">鸡蛋</button>
+                            <button type="button" class="quick-btn" data-food="鸡肉">鸡肉</button>
+                            <button type="button" class="quick-btn" data-food="猪肉">猪肉</button>
+                            <button type="button" class="quick-btn" data-food="牛肉">牛肉</button>
+                            <button type="button" class="quick-btn" data-food="海鲜">海鲜</button>
+                            <button type="button" class="quick-btn" data-food="蔬菜">蔬菜</button>
+                            <button type="button" class="quick-btn" data-food="水果">水果</button>
+                            <button type="button" class="quick-btn" data-food="牛奶">牛奶</button>
+                            <button type="button" class="quick-btn" data-food="坚果">坚果</button>
+                            <button type="button" class="quick-btn" data-food="辛辣食物">辛辣食物</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="food-notes">备注（或其他食物）</label>
+                        <textarea id="food-notes" rows="2" placeholder="例如：红烧鱼、炒青菜..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 运动记录 -->
+                <div class="record-section">
+                    <h3>🏃 运动</h3>
+                    <div class="form-group">
+                        <label for="exercise-type">运动类型</label>
+                        <select id="exercise-type">
+                            <option value="">今天没有运动</option>
+                            <option value="walk">散步</option>
+                            <option value="run">跑步</option>
+                            <option value="yoga">瑜伽</option>
+                            <option value="gym">健身房</option>
+                            <option value="swim">游泳</option>
+                            <option value="cycle">骑行</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="exercise-duration">运动时长（分钟）</label>
+                        <input type="number" id="exercise-duration" min="0" max="300" placeholder="30">
+                    </div>
+                    <div class="form-group">
+                        <label for="exercise-intensity">运动强度</label>
+                        <select id="exercise-intensity">
+                            <option value="low">轻度（微微出汗）</option>
+                            <option value="medium" selected>中度（明显出汗）</option>
+                            <option value="high">高强度（大量出汗）</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 睡眠记录 -->
+                <div class="record-section">
+                    <h3>😴 睡眠</h3>
+                    <div class="form-group">
+                        <label for="sleep-quality">睡眠质量</label>
+                        <div class="slider-container">
+                            <input type="range" id="sleep-quality" class="slider" min="1" max="5" value="3" oninput="updateSliderValue('sleep-quality-value', this.value)">
+                            <div class="slider-value" id="sleep-quality-value">3分（一般）</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="sleep-duration">睡眠时长（小时）</label>
+                        <input type="number" id="sleep-duration" min="0" max="24" step="0.5" placeholder="7.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="sleep-notes">睡眠备注</label>
+                        <textarea id="sleep-notes" rows="2" placeholder="例如：失眠、多梦、中途醒来..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 症状记录 -->
+                <div class="record-section">
+                    <h3>💊 症状</h3>
+                    <div class="form-group">
+                        <label for="itch-level">瘙痒程度</label>
+                        <div class="slider-container">
+                            <input type="range" id="itch-level" class="slider" min="1" max="10" value="5" oninput="updateSliderValue('itch-level-value', this.value)">
+                            <div class="slider-value" id="itch-level-value">5分</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>受影响部位</label>
+                        <div class="quick-buttons" id="affected-areas-buttons">
+                            <button type="button" class="quick-btn" data-area="颈部">颈部</button>
+                            <button type="button" class="quick-btn" data-area="手臂">手臂</button>
+                            <button type="button" class="quick-btn" data-area="手腕">手腕</button>
+                            <button type="button" class="quick-btn" data-area="腿部">腿部</button>
+                            <button type="button" class="quick-btn" data-area="脚踝">脚踝</button>
+                            <button type="button" class="quick-btn" data-area="背部">背部</button>
+                            <button type="button" class="quick-btn" data-area="腰部">腰部</button>
+                            <button type="button" class="quick-btn" data-area="其他">其他</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mood">心情</label>
+                        <select id="mood">
+                            <option value="good">😊 好</option>
+                            <option value="neutral" selected>😐 一般</option>
+                            <option value="bad">😞 不好</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="symptom-notes">症状备注</label>
+                        <textarea id="symptom-notes" rows="2" placeholder="例如：比昨天好一些、夜间加重..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 语音输入（可选） -->
+                <div class="record-section">
+                    <h3>🎤 语音输入（可选）</h3>
+                    <button type="button" class="btn btn-secondary" id="voice-btn" onclick="startVoiceInput()">开始语音输入</button>
+                    <p id="voice-status" style="margin-top: 10px; color: #666; font-size: 14px;"></p>
+                    <div class="form-group">
+                        <textarea id="voice-input" rows="3" placeholder="语音内容会显示在这里，你可以编辑..."></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">保存记录</button>
+            </form>
+        </div>
+
+        <!-- 历史记录 -->
+        <div id="history-tab" class="tab-content">
+            <h2>历史记录</h2>
+            <div class="form-group">
+                <label for="date-range">筛选日期范围</label>
+                <select id="date-range" onchange="loadHistory()">
+                    <option value="7">最近7天</option>
+                    <option value="30" selected>最近30天</option>
+                    <option value="90">最近90天</option>
+                    <option value="all">全部</option>
+                </select>
+            </div>
+            <div id="history-list">
+                <p style="text-align: center; color: #888;">加载中...</p>
+            </div>
+            <button class="btn btn-secondary" onclick="exportPDF()" style="margin-top: 20px;">导出PDF报告</button>
+        </div>
+
+        <!-- 统计分析 -->
+        <div id="stats-tab" class="tab-content">
+            <h2>统计分析</h2>
+
+            <!-- 基础统计 -->
+            <div id="stats-content">
+                <p style="text-align: center; color: #888;">加载中...</p>
+            </div>
+
+            <!-- AI智能分析 -->
+            <div style="margin-top: 30px; padding-top: 30px; border-top: 2px dashed #ddd;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <button id="ai-analysis-btn" class="btn btn-primary" onclick="analyzeWithGemini()" style="font-size: 16px; padding: 15px 30px;">
+                        🤖 开始AI智能分析
+                    </button>
+                    <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                        使用Google Gemini AI深度分析你的健康数据
+                    </p>
+                </div>
+                <div id="ai-analysis-result">
+                    <!-- AI分析结果将显示在这里 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入依赖库 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- 引入应用脚本 -->
+    <script src="js/config.js"></script>
+    <script src="js/record.js"></script>
+    <script src="js/display.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="js/ai-analysis.js"></script>
+
+    <script>
+        // 标签页切换
+        function switchTab(tabName) {
+            // 隐藏所有标签页
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 显示选中的标签页
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+
+            // 加载对应数据
+            if (tabName === 'history') {
+                loadHistory();
+            } else if (tabName === 'stats') {
+                loadStats();
+            }
+        }
+
+        // 滑块值更新
+        function updateSliderValue(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (elementId === 'sleep-quality-value') {
+                const labels = ['', '很差', '较差', '一般', '较好', '很好'];
+                element.textContent = value + '分（' + labels[value] + '）';
+            } else {
+                element.textContent = value + '分';
+            }
+        }
+
+        // 退出登录
+        async function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                await supabase.auth.signOut();
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>

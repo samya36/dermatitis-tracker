@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神经性皮炎管理 - 登录</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="auth-card">
+            <h1>神经性皮炎管理工具</h1>
+            <p class="subtitle">记录、分析、改善</p>
+
+            <!-- 登录表单 -->
+            <div id="login-form" class="auth-form">
+                <h2>登录</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="login-email">邮箱</label>
+                        <input type="email" id="login-email" required placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">密码</label>
+                        <input type="password" id="login-password" required placeholder="至少6位">
+                    </div>
+                    <button type="submit" class="btn btn-primary">登录</button>
+                </form>
+                <p class="switch-text">
+                    还没有账号？<a href="#" id="show-signup">立即注册</a>
+                </p>
+            </div>
+
+            <!-- 注册表单 -->
+            <div id="signup-form" class="auth-form" style="display: none;">
+                <h2>注册</h2>
+                <form id="signupForm">
+                    <div class="form-group">
+                        <label for="signup-email">邮箱</label>
+                        <input type="email" id="signup-email" required placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">密码</label>
+                        <input type="password" id="signup-password" required placeholder="至少6位" minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password-confirm">确认密码</label>
+                        <input type="password" id="signup-password-confirm" required placeholder="再输入一次">
+                    </div>
+                    <button type="submit" class="btn btn-primary">注册</button>
+                </form>
+                <p class="switch-text">
+                    已有账号？<a href="#" id="show-login">返回登录</a>
+                </p>
+            </div>
+
+            <!-- 加载状态 -->
+            <div id="loading" style="display: none;">
+                <p>处理中...</p>
+            </div>
+
+            <!-- 错误提示 -->
+            <div id="error-message" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- 引入Supabase客户端库 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+
+    <!-- 引入配置和认证逻辑 -->
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>

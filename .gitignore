@@ -1,0 +1,21 @@
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+.cache/
+
+# 注意：config.js包含敏感信息，如果你要分享代码，请不要上传真实的配置
+# 建议创建一个config.example.js作为模板
+# js/config.js
