@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分享 - 神经性皮炎管理工具</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .qr-container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .link {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .features {
+            text-align: left;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px dashed #ddd;
+        }
+        .features h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        .features li {
+            padding: 8px 0;
+            color: #555;
+        }
+        .features li:before {
+            content: "✓ ";
+            color: #4caf50;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 神经性皮炎管理工具</h1>
+        <p>记录、分析、改善 - 帮助你找出症状触发因素的智能健康管理应用</p>
+
+        <div class="qr-container">
+            <div id="qrcode"></div>
+            <p style="margin-top: 15px; font-size: 14px; color: #888;">
+                扫描二维码访问
+            </p>
+        </div>
+
+        <div class="link" id="appLink">
+            loading...
+        </div>
+
+        <button class="btn" onclick="copyLink()">📋 复制链接</button>
+        <button class="btn" onclick="window.location.href='index.html'">🚀 立即使用</button>
+
+        <div class="features">
+            <h3>功能特点</h3>
+            <ul>
+                <li>快速记录：饮食、运动、睡眠、症状</li>
+                <li>语音输入：轻松记录补充信息</li>
+                <li>数据可视化：趋势图表一目了然</li>
+                <li>基础统计：发现数据相关性</li>
+                <li>AI智能分析：专业健康建议（每日5次）</li>
+                <li>云端同步：多设备访问数据</li>
+                <li>PDF导出：方便给医生查看</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 30px; padding: 15px; background: #fff9f0; border-radius: 8px; text-align: left;">
+            <h4 style="color: #e67e22; margin-top: 0;">📱 添加到主屏幕</h4>
+            <p style="font-size: 14px; color: #666; margin-bottom: 0;">
+                <strong>iOS：</strong> Safari → 分享 → 添加到主屏幕<br>
+                <strong>Android：</strong> Chrome → 菜单 → 添加到主屏幕
+            </p>
+        </div>
+    </div>
+
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script>
+        // 获取当前域名
+        const appUrl = window.location.origin;
+        document.getElementById('appLink').textContent = appUrl;
+
+        // 生成二维码
+        new QRCode(document.getElementById("qrcode"), {
+            text: appUrl,
+            width: 200,
+            height: 200,
+            colorDark: "#667eea",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // 复制链接
+        function copyLink() {
+            navigator.clipboard.writeText(appUrl).then(() => {
+                alert('✓ 链接已复制到剪贴板！');
+            }).catch(() => {
+                alert('复制失败，请手动复制链接');
+            });
+        }
+    </script>
+</body>
+</html>
