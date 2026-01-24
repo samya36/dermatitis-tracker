@@ -26,6 +26,17 @@
 
         <!-- 今日记录 -->
         <div id="record-tab" class="tab-content active">
+            <!-- 今日已记录区域 -->
+            <div id="today-records-container" style="display: none; margin-bottom: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">📋 今日已记录</h2>
+                    <span id="today-records-count" style="color: #667eea; font-weight: 600; font-size: 14px;"></span>
+                </div>
+                <div id="today-records-list" style="background: #f9f9f9; padding: 15px; border-radius: 8px; max-height: 400px; overflow-y: auto;">
+                    <!-- 今日记录将显示在这里 -->
+                </div>
+            </div>
+
             <h2>快速记录</h2>
             <form id="recordForm">
                 <!-- 日期选择 -->
@@ -175,7 +186,15 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">保存记录</button>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">保存记录</button>
+                    <button type="button" class="btn btn-secondary" onclick="addAnotherMeal()" id="add-meal-btn" style="display: none; flex: 1;">
+                        ➕ 继续添加餐次
+                    </button>
+                </div>
+                <p id="meal-hint" style="text-align: center; color: #667eea; font-size: 13px; margin-top: 10px; display: none;">
+                    💡 一天可以记录多餐，保存后可继续添加其他餐次
+                </p>
             </form>
         </div>
 

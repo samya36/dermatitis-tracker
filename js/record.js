@@ -4,6 +4,8 @@ let currentUser = null;
 let selectedFoods = [];
 let selectedAreas = [];
 let recognition = null;
+let todayRecords = []; // 存储今日已记录的数据
+let recordMode = 'full'; // 'full' = 完整记录, 'meal' = 仅餐次记录
 
 // 页面加载完成后执行
 document.addEventListener('DOMContentLoaded', async function() {
@@ -24,6 +26,19 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 初始化日期选择器
     initDatePicker();
+
+    // 加载今日已记录的数据
+    await loadTodayRecords();
+
+    // 日期变化时重新加载记录
+    document.getElementById('record-date').addEventListener('change', function() {
+        loadTodayRecords();
+    });
+
+    // 餐次选择监听 - 显示提示
+    document.getElementById('meal-type').addEventListener('change', function() {
+        updateMealHint();
+    });
 
     // 初始化表单提交
     document.getElementById('recordForm').addEventListener('submit', handleFormSubmit);
@@ -274,16 +289,44 @@ async function handleFormSubmit(e) {
             successMsg += `运动时长: ${recordData.exercise_duration}分钟（未指定类型）\n`;
         }
 
+        if (recordData.meal_type) {
+            successMsg += `餐次: ${getMealTypeName(recordData.meal_type)}\n`;
+        }
         successMsg += `瘙痒程度: ${recordData.itch_level}/10分`;
 
-        alert(successMsg);
+        // 简化提示，不使用alert
+        console.log(successMsg);
 
-        // 重置表单
-        resetForm();
+        // 重新加载今日记录
+        await loadTodayRecords();
+
+        // 根据模式决定如何重置表单
+        if (recordMode === 'meal') {
+            // 仅餐次模式：只重置饮食相关字段
+            resetMealFields();
+            // 显示成功提示
+            showToast(`✓ ${getMealTypeName(recordData.meal_type)}记录成功！可继续添加其他餐次`);
+        } else {
+            // 完整模式：重置所有字段
+            resetForm();
+            showToast('✓ 记录保存成功！');
+        }
+
     } catch (error) {
         console.error('保存失败:', error);
         alert('保存失败: ' + error.message);
     }
+}
+
+// 获取餐次名称
+function getMealTypeName(type) {
+    const names = {
+        'breakfast': '早餐',
+        'lunch': '午餐',
+        'dinner': '晚餐',
+        'snack': '零食/加餐'
+    };
+    return names[type] || type;
 }
 
 // 辅助函数 - 获取运动类型名称
@@ -329,4 +372,215 @@ function resetForm() {
     // 清空语音输入
     document.getElementById('voice-input').value = '';
     document.getElementById('voice-status').textContent = '';
+
+    // 重置记录模式为完整模式
+    recordMode = 'full';
+
+    // 隐藏"继续添加餐次"按钮
+    document.getElementById('add-meal-btn').style.display = 'none';
+    document.getElementById('meal-hint').style.display = 'none';
+
+    // 重新设置日期为今天
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('record-date').value = today;
+}
+
+// 仅重置餐次相关字段
+function resetMealFields() {
+    // 清空餐次选择
+    document.getElementById('meal-type').value = '';
+
+    // 清空食物选择
+    document.querySelectorAll('#food-quick-buttons .quick-btn.selected').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    selectedFoods = [];
+
+    // 清空食物备注
+    document.getElementById('food-notes').value = '';
+
+    // 滚动到餐次选择区域
+    document.getElementById('meal-type').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// 加载今日记录
+async function loadTodayRecords() {
+    if (!currentUser) return;
+
+    const selectedDate = document.getElementById('record-date').value;
+
+    try {
+        const { data, error } = await supabase
+            .from('daily_records')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .eq('record_date', selectedDate)
+            .order('record_time', { ascending: true });
+
+        if (error) throw error;
+
+        todayRecords = data || [];
+        displayTodayRecords();
+        updateMealHint();
+    } catch (error) {
+        console.error('加载今日记录失败:', error);
+    }
+}
+
+// 显示今日记录
+function displayTodayRecords() {
+    const container = document.getElementById('today-records-container');
+    const list = document.getElementById('today-records-list');
+    const count = document.getElementById('today-records-count');
+
+    if (!todayRecords || todayRecords.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'block';
+    count.textContent = `共 ${todayRecords.length} 条记录`;
+
+    let html = '';
+
+    todayRecords.forEach((record, index) => {
+        const time = new Date(record.record_time).toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        html += `
+            <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #667eea;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #667eea;">记录 ${index + 1}</span>
+                    <span style="font-size: 12px; color: #888;">${time}</span>
+                </div>
+        `;
+
+        // 餐次信息
+        if (record.meal_type) {
+            html += `<div style="font-size: 14px; margin-bottom: 4px;">
+                <strong>🍽️ ${getMealTypeName(record.meal_type)}:</strong>
+                ${(record.food_items || []).join('、') || '无'}
+                ${record.food_notes ? ` (${record.food_notes})` : ''}
+            </div>`;
+        }
+
+        // 运动信息
+        if (record.exercise_type) {
+            html += `<div style="font-size: 14px; margin-bottom: 4px;">
+                <strong>🏃 运动:</strong> ${getExerciseTypeName(record.exercise_type)}`;
+            if (record.exercise_duration) {
+                html += ` - ${record.exercise_duration}分钟`;
+            }
+            html += `</div>`;
+        }
+
+        // 睡眠信息
+        if (record.sleep_duration) {
+            html += `<div style="font-size: 14px; margin-bottom: 4px;">
+                <strong>😴 睡眠:</strong> ${record.sleep_duration}小时 - 质量${record.sleep_quality}/5分
+            </div>`;
+        }
+
+        // 症状信息
+        html += `<div style="font-size: 14px;">
+            <strong>💊 症状:</strong> 瘙痒${record.itch_level}/10分 - ${getMoodName(record.mood)}
+        </div>`;
+
+        html += `</div>`;
+    });
+
+    list.innerHTML = html;
+}
+
+// 获取心情名称
+function getMoodName(mood) {
+    const names = {
+        'good': '😊 心情好',
+        'neutral': '😐 一般',
+        'bad': '😞 不好'
+    };
+    return names[mood] || mood;
+}
+
+// 继续添加餐次
+function addAnotherMeal() {
+    // 切换到仅餐次记录模式
+    recordMode = 'meal';
+
+    // 只重置餐次相关字段
+    resetMealFields();
+
+    // 显示提示
+    showToast('请选择餐次，继续记录饮食');
+}
+
+// 更新餐次提示
+function updateMealHint() {
+    const mealType = document.getElementById('meal-type').value;
+    const addMealBtn = document.getElementById('add-meal-btn');
+    const mealHint = document.getElementById('meal-hint');
+
+    // 检查今日已有多少条记录包含餐次
+    const mealCount = todayRecords.filter(r => r.meal_type && r.meal_type !== '').length;
+
+    if (mealType && mealType !== '') {
+        // 如果已经有记录，显示继续添加餐次的按钮
+        if (mealCount >= 0) {
+            addMealBtn.style.display = 'block';
+            mealHint.style.display = 'block';
+        }
+    }
+}
+
+// 显示Toast提示
+function showToast(message) {
+    // 创建toast元素
+    let toast = document.getElementById('custom-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'custom-toast';
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4caf50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-size: 15px;
+            font-weight: 500;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        `;
+        document.body.appendChild(toast);
+
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    toast.textContent = message;
+    toast.style.display = 'block';
+
+    // 3秒后自动隐藏
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 3000);
 }
