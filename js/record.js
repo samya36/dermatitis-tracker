@@ -7,14 +7,48 @@ let recognition = null;
 
 // 页面加载完成后执行
 document.addEventListener('DOMContentLoaded', async function() {
+    // 等待Supabase初始化
+    try {
+        await initSupabase();
+    } catch (error) {
+        alert('初始化失败: ' + error.message);
+        window.location.href = 'index.html';
+        return;
+    }
+
     // 检查用户登录状态
     await checkAuthStatus();
 
     // 初始化快捷按钮
     initQuickButtons();
 
+    // 初始化日期选择器
+    initDatePicker();
+
     // 初始化表单提交
     document.getElementById('recordForm').addEventListener('submit', handleFormSubmit);
+
+    // 运动时长输入监听 - 提示用户选择运动类型
+    document.getElementById('exercise-duration').addEventListener('input', function() {
+        const duration = this.value;
+        const typeSelect = document.getElementById('exercise-type');
+
+        if (duration && duration.trim() !== '' && (!typeSelect.value || typeSelect.value === '')) {
+            // 高亮运动类型选择框
+            typeSelect.style.borderColor = '#ffa726';
+            typeSelect.style.borderWidth = '2px';
+        } else {
+            // 恢复正常样式
+            typeSelect.style.borderColor = '';
+            typeSelect.style.borderWidth = '';
+        }
+    });
+
+    // 运动类型选择监听 - 移除高亮
+    document.getElementById('exercise-type').addEventListener('change', function() {
+        this.style.borderColor = '';
+        this.style.borderWidth = '';
+    });
 
     // 初始化语音识别
     initSpeechRecognition();
@@ -23,22 +57,40 @@ document.addEventListener('DOMContentLoaded', async function() {
 // 检查认证状态
 async function checkAuthStatus() {
     if (!supabase) {
-        alert('请先配置Supabase。查看README.md了解详情。');
+        alert('系统未初始化，请刷新页面重试');
         window.location.href = 'index.html';
         return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (!user) {
-        // 未登录，跳转到登录页
+        if (error || !user) {
+            // 未登录，跳转到登录页
+            window.location.href = 'index.html';
+            return;
+        }
+
+        currentUser = user;
+        // 显示用户邮箱
+        document.getElementById('user-email').textContent = user.email;
+    } catch (error) {
+        console.error('获取用户信息失败:', error);
         window.location.href = 'index.html';
-        return;
     }
+}
 
-    currentUser = user;
-    // 显示用户邮箱
-    document.getElementById('user-email').textContent = user.email;
+// 初始化日期选择器
+function initDatePicker() {
+    const dateInput = document.getElementById('record-date');
+    if (dateInput) {
+        // 设置默认值为今天
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+
+        // 设置最大值为今天（不能选择未来日期）
+        dateInput.max = today;
+    }
 }
 
 // 初始化快捷按钮
@@ -138,10 +190,23 @@ async function handleFormSubmit(e) {
         return;
     }
 
+    // 表单验证：如果填写了运动时长，必须选择运动类型
+    const exerciseDuration = document.getElementById('exercise-duration').value;
+    const exerciseType = document.getElementById('exercise-type').value;
+
+    if (exerciseDuration && exerciseDuration.trim() !== '' && (!exerciseType || exerciseType === '')) {
+        alert('⚠️ 请选择运动类型！\n\n你填写了运动时长，但没有选择运动类型。');
+        document.getElementById('exercise-type').focus();
+        return;
+    }
+
+    // 获取选择的日期
+    const selectedDate = document.getElementById('record-date').value;
+
     // 收集表单数据
     const recordData = {
         user_id: currentUser.id,
-        record_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        record_date: selectedDate, // 使用用户选择的日期
         record_time: new Date().toISOString(),
 
         // 饮食
@@ -151,7 +216,10 @@ async function handleFormSubmit(e) {
 
         // 运动
         exercise_type: document.getElementById('exercise-type').value || null,
-        exercise_duration: parseInt(document.getElementById('exercise-duration').value) || null,
+        exercise_duration: (function() {
+            const duration = document.getElementById('exercise-duration').value;
+            return duration && duration.trim() !== '' ? parseInt(duration) : null;
+        })(),
         exercise_intensity: document.getElementById('exercise-intensity').value || null,
 
         // 睡眠
@@ -169,6 +237,16 @@ async function handleFormSubmit(e) {
         voice_input: document.getElementById('voice-input').value || null,
     };
 
+    // 打印调试信息（方便检查数据）
+    console.log('=== 准备保存的记录数据 ===');
+    console.log('日期:', recordData.record_date);
+    console.log('运动类型:', recordData.exercise_type);
+    console.log('运动时长:', recordData.exercise_duration, '分钟');
+    console.log('运动强度:', recordData.exercise_intensity);
+    console.log('瘙痒程度:', recordData.itch_level);
+    console.log('完整数据:', recordData);
+    console.log('========================');
+
     // 保存到Supabase
     try {
         const { data, error } = await supabase
@@ -177,7 +255,28 @@ async function handleFormSubmit(e) {
 
         if (error) throw error;
 
-        alert('✓ 记录保存成功！');
+        console.log('✓ 数据已成功保存到数据库');
+
+        // 构建保存成功的详细提示
+        let successMsg = '✓ 记录保存成功！\n\n';
+        successMsg += `日期: ${selectedDate}\n`;
+
+        if (recordData.exercise_type) {
+            successMsg += `运动: ${getExerciseTypeName(recordData.exercise_type)}`;
+            if (recordData.exercise_duration) {
+                successMsg += ` - ${recordData.exercise_duration}分钟`;
+            }
+            if (recordData.exercise_intensity) {
+                successMsg += ` - ${getIntensityName(recordData.exercise_intensity)}`;
+            }
+            successMsg += '\n';
+        } else if (recordData.exercise_duration) {
+            successMsg += `运动时长: ${recordData.exercise_duration}分钟（未指定类型）\n`;
+        }
+
+        successMsg += `瘙痒程度: ${recordData.itch_level}/10分`;
+
+        alert(successMsg);
 
         // 重置表单
         resetForm();
@@ -185,6 +284,30 @@ async function handleFormSubmit(e) {
         console.error('保存失败:', error);
         alert('保存失败: ' + error.message);
     }
+}
+
+// 辅助函数 - 获取运动类型名称
+function getExerciseTypeName(type) {
+    const names = {
+        'walk': '散步',
+        'run': '跑步',
+        'yoga': '瑜伽',
+        'gym': '健身房',
+        'swim': '游泳',
+        'cycle': '骑行',
+        'other': '其他'
+    };
+    return names[type] || type;
+}
+
+// 辅助函数 - 获取强度名称
+function getIntensityName(intensity) {
+    const names = {
+        'low': '轻度',
+        'medium': '中度',
+        'high': '高强度'
+    };
+    return names[intensity] || intensity;
 }
 
 // 重置表单

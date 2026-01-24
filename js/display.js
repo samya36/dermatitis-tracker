@@ -64,11 +64,31 @@ function displayRecords(records) {
             weekday: 'short'
         });
 
+        // 构建运动信息
+        let exerciseInfo = '';
+        if (record.exercise_type && record.exercise_type !== '') {
+            exerciseInfo = `<div class="record-detail"><strong>运动：</strong>${getExerciseTypeName(record.exercise_type)}`;
+            if (record.exercise_duration) {
+                exerciseInfo += ` - ${record.exercise_duration}分钟`;
+            }
+            if (record.exercise_intensity) {
+                exerciseInfo += ` - ${getIntensityName(record.exercise_intensity)}`;
+            }
+            exerciseInfo += `</div>`;
+        } else if (record.exercise_duration) {
+            // 如果只填写了时长但没选类型，也显示出来
+            exerciseInfo = `<div class="record-detail"><strong>运动：</strong>未指定类型 - ${record.exercise_duration}分钟`;
+            if (record.exercise_intensity) {
+                exerciseInfo += ` - ${getIntensityName(record.exercise_intensity)}`;
+            }
+            exerciseInfo += `</div>`;
+        }
+
         html += `
             <div class="record-item">
                 <div class="record-date">${dateStr}</div>
                 ${record.meal_type ? `<div class="record-detail"><strong>饮食：</strong>${getMealTypeName(record.meal_type)} - ${(record.food_items || []).join('、') || '无'}${record.food_notes ? ' (' + record.food_notes + ')' : ''}</div>` : ''}
-                ${record.exercise_type ? `<div class="record-detail"><strong>运动：</strong>${getExerciseTypeName(record.exercise_type)} - ${record.exercise_duration}分钟 - ${getIntensityName(record.exercise_intensity)}</div>` : ''}
+                ${exerciseInfo}
                 ${record.sleep_duration ? `<div class="record-detail"><strong>睡眠：</strong>${record.sleep_duration}小时 - 质量${record.sleep_quality}分${record.sleep_notes ? ' (' + record.sleep_notes + ')' : ''}</div>` : ''}
                 <div class="record-detail"><strong>症状：</strong>瘙痒${record.itch_level}分 - ${(record.affected_areas || []).join('、') || '无特定部位'} - 心情${getMoodName(record.mood)}${record.symptom_notes ? ' (' + record.symptom_notes + ')' : ''}</div>
                 ${record.voice_input ? `<div class="record-detail"><strong>语音记录：</strong>${record.voice_input}</div>` : ''}

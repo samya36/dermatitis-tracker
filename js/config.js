@@ -9,20 +9,41 @@ const GEMINI_API_KEY = 'AIzaSyB_5lb95ZCN6j8cae9g2UpZVLIGDxxxijU'; // 在 https:/
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
 // 初始化Supabase客户端
-let supabase;
+let supabase = null;
+let supabaseInitialized = false;
 
-// 等待页面加载完成后初始化
-if (typeof window !== 'undefined') {
-    try {
-        if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
-            console.error('请先配置Supabase信息！请查看README.md了解如何设置。');
-        } else {
+// 初始化Supabase的函数
+function initSupabase() {
+    if (supabaseInitialized) {
+        return Promise.resolve(supabase);
+    }
+
+    return new Promise((resolve, reject) => {
+        try {
+            if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+                const error = new Error('请先配置Supabase信息！请查看README.md了解如何设置。');
+                console.error(error.message);
+                reject(error);
+                return;
+            }
+
+            // 检查Supabase库是否已加载
+            if (!window.supabase) {
+                const error = new Error('Supabase库未加载，请检查网络连接');
+                console.error(error.message);
+                reject(error);
+                return;
+            }
+
             // 使用UMD版本的全局变量
             const { createClient } = window.supabase;
             supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            supabaseInitialized = true;
             console.log('Supabase客户端初始化成功');
+            resolve(supabase);
+        } catch (error) {
+            console.error('Supabase初始化失败:', error);
+            reject(error);
         }
-    } catch (error) {
-        console.error('Supabase初始化失败:', error);
-    }
+    });
 }

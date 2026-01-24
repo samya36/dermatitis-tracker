@@ -1,7 +1,15 @@
 // 认证逻辑
 
 // 页面加载完成后执行
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // 等待Supabase初始化
+    try {
+        await initSupabase();
+    } catch (error) {
+        showError('初始化失败: ' + error.message);
+        return;
+    }
+
     // 检查用户是否已登录
     checkUser();
 
@@ -57,22 +65,31 @@ document.addEventListener('DOMContentLoaded', function() {
 // 检查用户登录状态
 async function checkUser() {
     if (!supabase) {
-        showError('请先配置Supabase。查看README.md了解详情。');
+        console.error('Supabase未初始化');
         return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (user) {
-        // 用户已登录，跳转到应用主界面
-        window.location.href = 'app.html';
+        if (error) {
+            console.error('获取用户信息失败:', error);
+            return;
+        }
+
+        if (user) {
+            // 用户已登录，跳转到应用主界面
+            window.location.href = 'app.html';
+        }
+    } catch (error) {
+        console.error('检查登录状态失败:', error);
     }
 }
 
 // 登录函数
 async function login(email, password) {
     if (!supabase) {
-        showError('请先配置Supabase。查看README.md了解详情。');
+        showError('系统未初始化，请刷新页面重试');
         return;
     }
 
@@ -91,7 +108,18 @@ async function login(email, password) {
         window.location.href = 'app.html';
     } catch (error) {
         console.error('登录失败:', error);
-        showError('登录失败: ' + error.message);
+        let errorMessage = '登录失败';
+
+        // 提供更友好的错误提示
+        if (error.message.includes('Invalid login credentials')) {
+            errorMessage = '邮箱或密码错误';
+        } else if (error.message.includes('Email not confirmed')) {
+            errorMessage = '请先验证邮箱';
+        } else if (error.message) {
+            errorMessage = '登录失败: ' + error.message;
+        }
+
+        showError(errorMessage);
     } finally {
         showLoading(false);
     }
@@ -100,7 +128,7 @@ async function login(email, password) {
 // 注册函数
 async function signup(email, password) {
     if (!supabase) {
-        showError('请先配置Supabase。查看README.md了解详情。');
+        showError('系统未初始化，请刷新页面重试');
         return;
     }
 
@@ -135,7 +163,13 @@ async function signup(email, password) {
         }
     } catch (error) {
         console.error('注册失败:', error);
-        showError('注册失败: ' + error.message);
+        let errorMessage = '注册失败';
+
+        if (error.message) {
+            errorMessage = '注册失败: ' + error.message;
+        }
+
+        showError(errorMessage);
     } finally {
         showLoading(false);
     }

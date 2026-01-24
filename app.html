@@ -28,6 +28,20 @@
         <div id="record-tab" class="tab-content active">
             <h2>快速记录</h2>
             <form id="recordForm">
+                <!-- 日期选择 -->
+                <div class="record-section" style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="record-date" style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 18px;">📅</span>
+                            <span>记录日期</span>
+                        </label>
+                        <input type="date" id="record-date" required>
+                        <p style="font-size: 13px; color: #666; margin-top: 8px; margin-bottom: 0;">
+                            💡 可以选择过去的日期来补充之前的记录
+                        </p>
+                    </div>
+                </div>
+
                 <!-- 饮食记录 -->
                 <div class="record-section">
                     <h3>🍽️ 饮食</h3>
