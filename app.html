@@ -38,7 +38,9 @@
             </div>
 
             <h2>快速记录</h2>
-            <form id="recordForm">
+            <form id="recordForm"
+                  toolname="save_daily_record"
+                  tooldescription="Save a daily health record for dermatitis tracking. Records diet (meal type, food items), exercise (type, duration, intensity), sleep (quality 1-5, duration), and symptoms (itch level 1-10, affected areas, mood). Returns success status.">
                 <!-- 日期选择 -->
                 <div class="record-section" style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                     <div class="form-group" style="margin-bottom: 0;">
@@ -46,7 +48,8 @@
                             <span style="font-size: 18px;">📅</span>
                             <span>记录日期</span>
                         </label>
-                        <input type="date" id="record-date" required>
+                        <input type="date" id="record-date" name="record_date" required
+                               toolparamdescription="Date of the record in YYYY-MM-DD format. Defaults to today.">
                         <p style="font-size: 13px; color: #666; margin-top: 8px; margin-bottom: 0;">
                             💡 可以选择过去的日期来补充之前的记录
                         </p>
@@ -58,7 +61,8 @@
                     <h3>🍽️ 饮食</h3>
                     <div class="form-group">
                         <label for="meal-type">餐次</label>
-                        <select id="meal-type">
+                        <select id="meal-type" name="meal_type"
+                                toolparamdescription="Meal type: breakfast, lunch, dinner, or snack. Optional.">
                             <option value="">选择餐次</option>
                             <option value="breakfast">早餐</option>
                             <option value="lunch">午餐</option>
@@ -85,7 +89,8 @@
                     </div>
                     <div class="form-group">
                         <label for="food-notes">备注（或其他食物）</label>
-                        <textarea id="food-notes" rows="2" placeholder="例如：红烧鱼、炒青菜..."></textarea>
+                        <textarea id="food-notes" name="food_notes" rows="2" placeholder="例如：红烧鱼、炒青菜..."
+                                  toolparamdescription="Comma-separated food items or additional food notes. Optional."></textarea>
                     </div>
                 </div>
 
@@ -94,7 +99,8 @@
                     <h3>🏃 运动</h3>
                     <div class="form-group">
                         <label for="exercise-type">运动类型</label>
-                        <select id="exercise-type">
+                        <select id="exercise-type" name="exercise_type"
+                                toolparamdescription="Exercise type: walk, run, yoga, gym, swim, cycle, or other. Leave empty if no exercise.">
                             <option value="">今天没有运动</option>
                             <option value="walk">散步</option>
                             <option value="run">跑步</option>
@@ -107,11 +113,13 @@
                     </div>
                     <div class="form-group">
                         <label for="exercise-duration">运动时长（分钟）</label>
-                        <input type="number" id="exercise-duration" min="0" max="300" placeholder="30">
+                        <input type="number" id="exercise-duration" name="exercise_duration" min="0" max="300" placeholder="30"
+                               toolparamdescription="Exercise duration in minutes (0-300). Only needed if exercise_type is set.">
                     </div>
                     <div class="form-group">
                         <label for="exercise-intensity">运动强度</label>
-                        <select id="exercise-intensity">
+                        <select id="exercise-intensity" name="exercise_intensity"
+                                toolparamdescription="Exercise intensity: low, medium, or high.">
                             <option value="low">轻度（微微出汗）</option>
                             <option value="medium" selected>中度（明显出汗）</option>
                             <option value="high">高强度（大量出汗）</option>
@@ -125,13 +133,15 @@
                     <div class="form-group">
                         <label for="sleep-quality">睡眠质量</label>
                         <div class="slider-container">
-                            <input type="range" id="sleep-quality" class="slider" min="1" max="5" value="3" oninput="updateSliderValue('sleep-quality-value', this.value)">
+                            <input type="range" id="sleep-quality" name="sleep_quality" class="slider" min="1" max="5" value="3" oninput="updateSliderValue('sleep-quality-value', this.value)"
+                                   toolparamdescription="Sleep quality from 1 (very poor) to 5 (very good).">
                             <div class="slider-value" id="sleep-quality-value">3分（一般）</div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="sleep-duration">睡眠时长（小时）</label>
-                        <input type="number" id="sleep-duration" min="0" max="24" step="0.5" placeholder="7.5">
+                        <input type="number" id="sleep-duration" name="sleep_duration" min="0" max="24" step="0.5" placeholder="7.5"
+                               toolparamdescription="Sleep duration in hours (e.g. 7.5).">
                     </div>
                     <div class="form-group">
                         <label for="sleep-notes">睡眠备注</label>
@@ -145,7 +155,8 @@
                     <div class="form-group">
                         <label for="itch-level">瘙痒程度</label>
                         <div class="slider-container">
-                            <input type="range" id="itch-level" class="slider" min="1" max="10" value="5" oninput="updateSliderValue('itch-level-value', this.value)">
+                            <input type="range" id="itch-level" name="itch_level" class="slider" min="1" max="10" value="5" oninput="updateSliderValue('itch-level-value', this.value)"
+                                   toolparamdescription="Itch severity from 1 (minimal) to 10 (unbearable). Required.">
                             <div class="slider-value" id="itch-level-value">5分</div>
                         </div>
                     </div>
@@ -164,7 +175,8 @@
                     </div>
                     <div class="form-group">
                         <label for="mood">心情</label>
-                        <select id="mood">
+                        <select id="mood" name="mood"
+                                toolparamdescription="Mood: good, neutral, or bad. Required.">
                             <option value="good">😊 好</option>
                             <option value="neutral" selected>😐 一般</option>
                             <option value="bad">😞 不好</option>
@@ -256,6 +268,7 @@
     <script src="js/display.js"></script>
     <script src="js/stats.js"></script>
     <script src="js/ai-analysis.js"></script>
+    <script src="js/webmcp-tools.js"></script>
 
     <script>
         // 标签页切换

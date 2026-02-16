@@ -201,6 +201,10 @@ async function handleFormSubmit(e) {
     e.preventDefault();
 
     if (!currentUser) {
+        if (e.agentInvoked) {
+            e.respondWith(Promise.resolve({ success: false, error: "User not logged in" }));
+            return;
+        }
         alert('请先登录');
         return;
     }
@@ -272,6 +276,20 @@ async function handleFormSubmit(e) {
 
         console.log('✓ 数据已成功保存到数据库');
 
+        // WebMCP: respond to AI agent if invoked
+        if (e.agentInvoked) {
+            e.respondWith(Promise.resolve({
+                success: true,
+                message: "Daily record saved successfully",
+                record: {
+                    date: recordData.record_date,
+                    meal_type: recordData.meal_type,
+                    itch_level: recordData.itch_level,
+                    mood: recordData.mood
+                }
+            }));
+        }
+
         // 构建保存成功的详细提示
         let successMsg = '✓ 记录保存成功！\n\n';
         successMsg += `日期: ${selectedDate}\n`;
@@ -314,6 +332,10 @@ async function handleFormSubmit(e) {
 
     } catch (error) {
         console.error('保存失败:', error);
+        if (e.agentInvoked) {
+            e.respondWith(Promise.resolve({ success: false, error: error.message }));
+            return;
+        }
         alert('保存失败: ' + error.message);
     }
 }
